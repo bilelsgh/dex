@@ -14,6 +14,17 @@ import plotly.express as px
 import streamlit as st
 
 
+@st.cache_data
+def load_data(path: str) -> pd.DataFrame:
+    """
+    Load a csv file
+
+    :param path: path to csv file
+    :return: dataframe
+    """
+    return pd.read_csv(path)
+
+
 def column_analysis(col: str, dataset: pd.DataFrame) -> None:
     st.markdown(f"## 📌 Analysis of {col}")
 
@@ -24,7 +35,7 @@ def column_analysis(col: str, dataset: pd.DataFrame) -> None:
 
     # Numerical column
     if pd.api.types.is_numeric_dtype(dataset[col]):
-        st.line_chart(dataset[col])
+        st.line_chart(dataset[col].tolist())
 
         st.markdown("### 📊 Summary stats")
         st.dataframe(dataset[col].describe().to_frame().T, use_container_width=True)
@@ -42,6 +53,7 @@ def column_analysis(col: str, dataset: pd.DataFrame) -> None:
             st.dataframe(value_counts, use_container_width=True)
 
 
+@st.cache_data
 def dataset_variance_chart(dataset: pd.DataFrame) -> Union[None, Figure]:
     """
     Display a chart showing the variance of each column in a dataset.
@@ -56,9 +68,9 @@ def dataset_variance_chart(dataset: pd.DataFrame) -> Union[None, Figure]:
         var_df = pd.DataFrame({"Column": variances.index, "Variance": variances.values})
         fig = px.bar(
             var_df,
-            x="Variance",
-            y="Column",
-            orientation="h",
+            x="Column",
+            y="Variance",
+            orientation="v",
             title="Variance per Numerical Feature",
             height=500,
             labels={"Variance": "Variance", "Column": "Feature"},
@@ -68,6 +80,7 @@ def dataset_variance_chart(dataset: pd.DataFrame) -> Union[None, Figure]:
     return None
 
 
+@st.cache_data
 def dataset_unique_value_chart(dataset: pd.DataFrame) -> Figure:
     """
     Display a chart counting the number of unique values of each column in a dataset.
@@ -82,9 +95,9 @@ def dataset_unique_value_chart(dataset: pd.DataFrame) -> Figure:
     )
     return px.bar(
         unique_df,
-        x="Unique Values",
-        y="Column",
-        orientation="h",
+        x="Column",
+        y="Unique Values",
+        orientation="v",
         title="Number of Unique Values per Column",
         labels={"Unique Values": "Count", "Column": "Feature"},
     )

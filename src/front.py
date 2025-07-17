@@ -11,9 +11,10 @@ from helpers.dashboard_utils import (
     column_analysis,
     dataset_unique_value_chart,
     dataset_variance_chart,
+    load_data,
 )
 
-st.set_page_config(layout="wide")
+# st.set_page_config(layout="wide")
 st.title("Dataset preparation")
 
 l0, r0 = st.columns(2)
@@ -22,10 +23,10 @@ dataset_df = pd.DataFrame({})
 # Data upload
 with l0:
     st.markdown("")
-    with st.expander("Upload your dataset"):
-        dataset_csv = st.file_uploader("", type="csv")
+    with st.expander("⬆️ Upload your dataset"):
+        dataset_csv = st.file_uploader("Upload", type="csv")
         try:
-            dataset_df = pd.read_csv(dataset_csv)
+            dataset_df = load_data(dataset_csv)
             st.success("Dataset loaded successfully! 🎉")
         except ValueError:
             st.error("Please upload your dataset. Only .csv files are supported.")
@@ -44,11 +45,11 @@ if len(dataset_df):
         col3.metric("💾 Size (MB)", f"{size} Mo")
 
     # ===== Raw data ====
-    with st.expander("Raw data"):
+    with st.expander("🥩 Raw data"):
         st.dataframe(dataset_df)
 
     # ===== Dataset description =====
-    with st.expander("Overview"):
+    with st.expander("🥩 Description"):
         l1, r1 = st.columns(2)
 
         # == dataframe statistics
@@ -67,26 +68,45 @@ if len(dataset_df):
         )  # convert to df
         r1.dataframe(df, hide_index=True, height=315)
 
+    # ==== Feature overview ===
+    with st.expander("🔍 Overview"):
+
+        # == features selection
+        removed_features = st.multiselect(
+            "I remove..", dataset_df.columns, default=[], placeholder="Chose features"
+        )
+        l2, r2 = st.columns(2)
+
         # == column distribution
-        type_counts = dataset_df.dtypes.value_counts()
+        type_counts = dataset_df.drop(removed_features, axis=1).dtypes.value_counts()
         type_fig = px.pie(
             names=type_counts.index.astype(str),
             values=type_counts.values,
             title="Column Types",
         )
-        r1.plotly_chart(type_fig)
+        r2.plotly_chart(type_fig)
 
         # == variance
-        var_fig = dataset_variance_chart(dataset_df)
+        with st.spinner("..Computing variances"):
+            var_fig = dataset_variance_chart(dataset_df.drop(removed_features, axis=1))
         if var_fig:
-            l1.plotly_chart(var_fig)
+            l2.plotly_chart(var_fig)
 
         # == unique values
-        unq_fig = dataset_unique_value_chart(dataset_df)
+        with st.spinner("..Checking unique values"):
+            unq_fig = dataset_unique_value_chart(
+                dataset_df.drop(removed_features, axis=1)
+            )
         st.plotly_chart(unq_fig)
 
-    # ==== Columns analysis ====
-    with st.expander("Analysis"):
-        selected_col = st.pills("", dataset_df.columns.tolist())
+    # # ==== Columns analysis ====
+    with st.expander("💡 Analysis"):
+        selected_col = st.pills("Columns", dataset_df.columns.tolist())
+        st.markdown("---")
+        low_rows_bound, high_rows_bound = st.slider(
+            "Select the rows you want to analyse", value=(0, len(dataset_df) - 1)
+        )
         if selected_col:
-            column_analysis(selected_col, dataset_df)
+            column_analysis(
+                selected_col, dataset_df.iloc[low_rows_bound:high_rows_bound, :]
+            )
