@@ -5,13 +5,14 @@ Various functions used in the streamlit dashboard.
 import sys
 from typing import Union
 
-from plotly.graph_objs import Figure
-
 sys.path.append("../src")
 
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+from plotly.graph_objs import Figure
+
+from helpers.data_preproccesing import run_preprocess
 
 
 @st.cache_data
@@ -101,3 +102,15 @@ def dataset_unique_value_chart(dataset: pd.DataFrame) -> Figure:
         title="Number of Unique Values per Column",
         labels={"Unique Values": "Count", "Column": "Feature"},
     )
+
+
+@st.dialog("Are you sure?")
+def sumup_operations(operations: dict, dataset: pd.DataFrame) -> None:
+    st.markdown("### You are about to run")
+
+    txt = "\n".join([f"- {op}" for op, _ in operations.items()])
+    st.markdown(txt)
+
+    if st.button("Confirm"):
+        st.session_state["enc_dataset"] = run_preprocess(operations, dataset)
+        st.rerun()

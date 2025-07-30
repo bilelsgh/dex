@@ -14,8 +14,11 @@ from helpers.dashboard_utils import (
     load_data,
 )
 
+# == Page config
+st.set_page_config(page_title="Home", page_icon="")
+
 # st.set_page_config(layout="wide")
-st.title("Dataset preparation")
+st.title("DeX - Analysis")
 
 l0, r0 = st.columns(2)
 dataset_df = pd.DataFrame({})
