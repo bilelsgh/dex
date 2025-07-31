@@ -37,7 +37,7 @@ class DatasetDownloader:
     @property
     def download_file(self):
         return (
-            st.session_state["enc_dataset"].to_csv()
+            st.session_state["enc_dataset"].to_csv(index=False)
             if self.is_single
             else split_datasets(
                 self.processed_dataset, self.datasets_idx, self.datasets_name

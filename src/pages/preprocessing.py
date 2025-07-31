@@ -63,8 +63,28 @@ if len(dataset_df):
             if st.toggle("Remove invalid value (NaN, inf ...)"):
                 operations["remove_inv_val"] = {}
 
-            col_to_drop = st.multiselect("Columns to drop", dataset_df.columns)
+            col_to_drop = st.multiselect("Drop columns:", dataset_df.columns)
             dataset_df = dataset_df.drop(col_to_drop, axis=1)
+
+        with st.expander("Replace values"):
+            if st.toggle("Fill values to replace"):
+                placeholder = """Please respect the following format:
+    {
+        <column_name>: [
+            {
+                "former_values": ["...", ..],
+                "new_value": ".."
+            }
+    ]
+        ...
+    }
+                """
+                mapping_txt = st.text_area("Mapping", placeholder=placeholder)
+
+                try:
+                    operations["replace_val"] = {"mappings": json.loads(mapping_txt)}
+                except json.decoder.JSONDecodeError:
+                    st.warning("Please provide a valid JSON")
 
         with st.expander("Encoding"):
             # == ohe
@@ -122,9 +142,6 @@ if len(dataset_df):
 
     if "enc_dataset" in st.session_state:
         ready = st.session_state["enc_dataset"]
-        ready = ready.drop(
-            [col in ready.columns for col in ready.columns if "Unnamed" in col], axis=1
-        )
 
         # File to download
         dataset_downloader = DatasetDownloader(datasets_idx, ready, datasets_name)

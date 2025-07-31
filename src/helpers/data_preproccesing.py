@@ -114,6 +114,40 @@ def remove_invalid_val(dataset: pd.DataFrame, k: int = 10) -> pd.DataFrame:
     return df
 
 
+def change_label(dataset: pd.DataFrame, mappings: dict) -> pd.DataFrame:
+    """
+    Change label column values.
+
+    :param dataset: Dataset to change.
+    :param mappings: Dict containing the mappings {
+        <column_name>: [
+                            {
+                                "former_values": ["...", ..],
+                                "new_value": ".."
+                            }
+                    ]
+        ...
+    }
+    :return:
+    """
+
+    df = dataset.copy()
+    logger.debug(f"df length: {len(df)}")
+    # iterate over columns
+    for col_name, values in mappings.items():
+
+        # iterate over mappings
+        for mapping in values:
+            df[col_name] = df[col_name].replace(
+                mapping["former_values"], mapping["new_value"]
+            )
+
+        df[col_name] = df[col_name].astype("string")
+
+    logger.debug(f"df length: {len(df)}")
+    return df
+
+
 def run_preprocess(
     operations: dict[str, list[str]], dataset: pd.DataFrame
 ) -> pd.DataFrame:
@@ -129,6 +163,7 @@ def run_preprocess(
         "remove_inv_val": remove_invalid_val,
         "standardization": standardize_dataset,
         "encoding": encode_dataset,
+        "replace_val": change_label,
     }
     df_dataset = dataset.copy()
     progress = st.progress(0, "Operation in progress..")
@@ -162,9 +197,10 @@ def split_datasets(
     """
 
     indexes_ = indexes.copy()
-    indexes_.insert(0, -1)  # for the first split dataset
+    indexes_.insert(0, 0)  # for the first split dataset
     datasets = [
-        dataset.iloc[indexes_[i] + 1 : indexes_[i + 1]] for i in range(len(indexes))
+        dataset.iloc[indexes_[i] : indexes_[i] + indexes_[i + 1]]
+        for i in range(len(indexes))
     ]
 
     if not for_download:
@@ -175,6 +211,6 @@ def split_datasets(
 
     with zipfile.ZipFile(buf, "x") as csv_zip:
         for n, d in zip(names, datasets):
-            csv_zip.writestr(f"preprocessed_{n}", pd.DataFrame(d).to_csv())
+            csv_zip.writestr(f"preprocessed_{n}", pd.DataFrame(d).to_csv(index=False))
 
     return buf

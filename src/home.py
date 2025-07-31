@@ -21,39 +21,36 @@ st.set_page_config(page_title="Home", page_icon="")
 # st.set_page_config(layout="wide")
 st.title("DeX - Analysis")
 
-l0, r0 = st.columns(2)
 dataset_df = pd.DataFrame({})
 
 # Data upload
-with l0:
-    st.markdown("")
-    with st.expander("⬆️ Upload your dataset"):
-        dataset_csv = st.file_uploader("Upload", type="csv")
-        try:
-            dataset_df = load_data(dataset_csv)
-            st.success("Dataset loaded successfully! 🎉")
-        except ValueError:
-            st.error("Please upload your dataset. Only .csv files are supported.")
+st.markdown("")
+with st.expander("⬆️ Upload your dataset"):
+    dataset_csv = st.file_uploader("Upload", type="csv")
+    try:
+        dataset_df = load_data(dataset_csv)
+        st.success("Dataset loaded successfully! 🎉")
+    except ValueError:
+        st.error("Please upload your dataset. Only .csv files are supported.")
 
 # ==== Overview metrics ====
 if len(dataset_df):
-    with r0:
-        nb_lines, nb_features, size = (
-            len(dataset_df),
-            len(dataset_df.columns),
-            round(dataset_csv.size / (1024**2), 1),
-        )
-        col1, col2, col3 = st.columns(3)
-        col1.metric("📏 Rows", nb_lines)
-        col2.metric("📐 Columns", nb_features)
-        col3.metric("💾 Size (MB)", f"{size} Mo")
+    nb_lines, nb_features, size = (
+        len(dataset_df),
+        len(dataset_df.columns),
+        round(dataset_csv.size / (1024**2), 1),
+    )
+    col1, col2, col3 = st.columns(3)
+    col1.metric("📏 Rows", nb_lines)
+    col2.metric("📐 Columns", nb_features)
+    col3.metric("💾 Size (MB)", f"{size} Mo")
 
     # ===== Raw data ====
     with st.expander("🥩 Raw data"):
         st.dataframe(dataset_df)
 
     # ===== Dataset description =====
-    with st.expander("🥩 Description"):
+    with st.expander("📄 Description"):
         l1, r1 = st.columns(2)
 
         # == dataframe statistics

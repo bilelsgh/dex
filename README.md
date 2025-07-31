@@ -26,8 +26,8 @@ Apply state-of-the-art preprocessing operations to fit your data to Machine Lear
 1. Clone the repository:
 
 ```bash
-  git clone https://github.com/bilelsgh/dataset_exploration
-  cd dataset_exploration
+  git clone https://github.com/bilelsgh/dex.git
+  cd dex
 ```
 2. Install the libraries
 ```bash
@@ -40,11 +40,3 @@ pip install requirements.txt
 ```bash
   streamlit run src/home.py
 ```
-
----
-
-##### todo
-    - analyse the statistics and return insights
-    - dim reduction
-    - replace values
-    - rename columns
