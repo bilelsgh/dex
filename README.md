@@ -34,3 +34,11 @@ pip install requirements.txt
 ```bash
   streamlit run src/home.py
 ```
+
+---
+
+##### todo
+    - analyse the statistics and return insights
+    - dim reduction
+    - replace values
+    - rename columns

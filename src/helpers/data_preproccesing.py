@@ -2,12 +2,15 @@
 Contains classic data preprocessing function
 """
 
-import pickle
-from typing import List, Tuple
+import io
+import zipfile
+from io import BytesIO
+from typing import List, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import streamlit as st
+from loguru import logger
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
 
 
@@ -27,6 +30,7 @@ def encode_dataset(
     """
 
     enc = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
+    logger.debug("Encode")
 
     # encode cat columns
     train_cat_enc = enc.fit_transform(train[ohe])
@@ -41,8 +45,8 @@ def encode_dataset(
     )
 
     # encode label
-    l_enc = LabelEncoder()
     for c in le:
+        l_enc = LabelEncoder()
         train_enc[c] = l_enc.fit_transform(train[c])
 
     return train_enc
@@ -57,6 +61,7 @@ def standardize_dataset(dataset: pd.DataFrame, col: list[str] = None) -> pd.Data
     :return: Standardized dataset.
     """
 
+    logger.debug("Standardize")
     # init
     df = dataset.copy()
     std = StandardScaler()
@@ -133,8 +138,43 @@ def run_preprocess(
         progress.progress((1 + idx) * 1 / len(operations))
 
         # try:
-        df_dataset = valid_operations[operation](dataset, **args)
+        df_dataset = valid_operations[operation](df_dataset, **args)
         # except KeyError as e:
         #     raise ValueError(f"{e} is not a valid operation")
 
     return df_dataset
+
+
+def split_datasets(
+    dataset: pd.DataFrame,
+    indexes: list[int],
+    names: list[str],
+    for_download: bool = True,
+) -> Union[BytesIO, Tuple[pd.DataFrame, ...]]:
+    """
+    Split dataset in len(indexes) subdatasets according to the given indexes.
+
+    :param dataset: Dataset to split.
+    :param indexes: Size of the subdatasets.
+    :param names: Names of the subdatasets.
+    :param for_download: If True, return a zip object for download, else return a tuple containing the datasets.
+    :return: Split dataset.
+    """
+
+    indexes_ = indexes.copy()
+    indexes_.insert(0, -1)  # for the first split dataset
+    datasets = [
+        dataset.iloc[indexes_[i] + 1 : indexes_[i + 1]] for i in range(len(indexes))
+    ]
+
+    if not for_download:
+        return tuple(datasets)
+
+    # create a zip file
+    buf = io.BytesIO()
+
+    with zipfile.ZipFile(buf, "x") as csv_zip:
+        for n, d in zip(names, datasets):
+            csv_zip.writestr(f"preprocessed_{n}", pd.DataFrame(d).to_csv())
+
+    return buf

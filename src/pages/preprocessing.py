@@ -2,6 +2,7 @@
 Page to preprocess the dataset
 """
 
+import json
 import sys
 
 sys.path.append("../..")
@@ -10,6 +11,8 @@ import pandas as pd
 import streamlit as st
 
 from helpers.dashboard_utils import load_data, sumup_operations
+from helpers.data_preproccesing import split_datasets
+from helpers.dataset_tools import DatasetDownloader
 
 # == Page config
 st.set_page_config(page_title="Preprocessing", page_icon="")
@@ -19,52 +22,92 @@ st.title("DeX - Preprocessing")
 dataset_df = pd.DataFrame({})
 
 with st.expander("⬆️ Upload your dataset"):
-    dataset_csv = st.file_uploader("Upload", type="csv")
+    datasets_csv = st.file_uploader(
+        "Upload", type="csv", accept_multiple_files=True
+    )  # multiple files for train, test, val
 
+    # Reset session state
+    # if "enc_dataset" in st.session_state:
+    #     del st.session_state["enc_dataset"]
+
+    # == Load dataset(s)
     try:
-        dataset_df = load_data(dataset_csv)
+        datasets_name = (
+            [d.name for d in datasets_csv]
+            if len(datasets_csv) > 1
+            else datasets_csv[0].name
+        )
+        datasets_df = [load_data(dataset_csv) for dataset_csv in datasets_csv]
+        datasets_idx = [
+            len(d) for d in datasets_df
+        ]  # keep the size of every dataset for splitting after processing
+        dataset_df = pd.concat(datasets_df)
         st.success("Dataset loaded successfully! 🎉")
-    except ValueError:
+    except (ValueError, IndexError):
         st.error("Please upload your dataset. Only .csv files are supported.")
 
 if len(dataset_df):
 
     operations = {}
-    if st.toggle("Remove invalid value (NaN, inf ...)"):
-        operations["remove_inv_val"] = {}
+    view = st.radio(
+        "How to preprocess?",
+        options=["Step by step", "Import a configuration"],
+        horizontal=True,
+    )
+    st.markdown("---")
 
-    with st.expander("Encoding"):
-        # == ohe
-        ohe_col = st.multiselect(
-            "Columns to encode with One Hot Encoding", options=dataset_df.columns
-        )
-        c1, c2 = st.columns(2)
+    # == Processing is done through the graphic interface
+    if view == "Step by step":
 
-        # == l.encoding
-        le_col = [col for col in dataset_df.columns if col not in ohe_col]
-        if not c1.checkbox("Use Label Encoder for the remaining columns"):
-            le_col = c2.multiselect(
-                "Columns to encode with Label Encoder",
-                options=[col for col in dataset_df.columns if col not in ohe_col],
-            )
+        with st.expander("Drop values"):
+            if st.toggle("Remove invalid value (NaN, inf ...)"):
+                operations["remove_inv_val"] = {}
 
-        operations["encoding"] = {"ohe": ohe_col, "le": le_col}
+            col_to_drop = st.multiselect("Columns to drop", dataset_df.columns)
+            dataset_df = dataset_df.drop(col_to_drop, axis=1)
 
-    with st.expander("Normalization"):
+        with st.expander("Encoding"):
+            # == ohe
+            if st.toggle("Encode?"):
+                ohe_col = st.multiselect(
+                    "Columns to encode with One Hot Encoding",
+                    options=dataset_df.columns,
+                )
+                c1, c2 = st.columns(2)
 
-        normalization_op = st.selectbox(
-            "Normalization operation", options=["Standardization", "MinMax"]
-        )
-        c3, c4 = st.columns(2)
+                # == l.encoding
+                le_col = [col for col in dataset_df.columns if col not in ohe_col]
+                if not c1.checkbox("Use Label Encoder for the remaining columns"):
+                    le_col = c2.multiselect(
+                        "Columns to encode with Label Encoder",
+                        options=[
+                            col for col in dataset_df.columns if col not in ohe_col
+                        ],
+                    )
 
-        normalization_col = []
-        if not c3.checkbox("Normalize every numeric column"):
-            normalization_col = st.multiselect(
-                "Columns to normalize", options=dataset_df.columns
-            )
+                operations["encoding"] = {"ohe": ohe_col, "le": le_col}
 
-        operations[normalization_op.lower()] = {"col": normalization_col}
+        with st.expander("Normalization"):
 
+            if st.toggle("Normalize?"):
+                normalization_op = st.selectbox(
+                    "Normalization operation", options=["Standardization", "MinMax"]
+                )
+                c3, c4 = st.columns(2)
+
+                normalization_col = []
+                if not c3.checkbox("Normalize every numeric column"):
+                    normalization_col = st.multiselect(
+                        "Columns to normalize", options=dataset_df.columns
+                    )
+
+                operations[normalization_op.lower()] = {"col": normalization_col}
+
+    # == Import config
+    else:
+        config = st.text_area("Configuration")
+        if config:
+            operations = json.loads(config)
     # with st.expander("Dimension reduction"):
     #     nb_dim = st.number_input('Number of dimensions to keep')
     #     min_var = st.number_input('Minimum variance')
@@ -78,9 +121,17 @@ if len(dataset_df):
         preprocessed_dataset = sumup_operations(operations, dataset_df)
 
     if "enc_dataset" in st.session_state:
+        ready = st.session_state["enc_dataset"]
+        ready = ready.drop(
+            [col in ready.columns for col in ready.columns if "Unnamed" in col], axis=1
+        )
+
+        # File to download
+        dataset_downloader = DatasetDownloader(datasets_idx, ready, datasets_name)
+
         c6.download_button(
             "Download encoded dataset",
-            (st.session_state["enc_dataset"]).to_csv(index=False),
-            file_name="processed_dataset.csv",
-            mime="text/csv",
+            dataset_downloader.download_file,
+            file_name=dataset_downloader.file_name,
+            mime=dataset_downloader.mime_type,
         )

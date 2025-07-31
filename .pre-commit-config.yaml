@@ -1,4 +1,19 @@
 repos:
+#-   repo: local
+#    hooks:
+#    -   id: pytest
+#        name: 🧪 Run pytest
+#        entry: pytest
+#        language: system
+#        types: [python]
+#        pass_filenames: false
+#        always_run: true
+#        args: [
+#          "-v",                    # verbose
+#          "--tb=short",           # traceback court
+#        ]
+#
+  # code quality
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.3.0
     hooks:

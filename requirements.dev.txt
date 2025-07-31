@@ -9,3 +9,6 @@ pylint
 mypy
 pyment
 pdoc3
+
+pytest
+loguru

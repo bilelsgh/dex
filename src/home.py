@@ -11,6 +11,7 @@ from helpers.dashboard_utils import (
     column_analysis,
     dataset_unique_value_chart,
     dataset_variance_chart,
+    df_info_table,
     load_data,
 )
 
@@ -61,15 +62,11 @@ if len(dataset_df):
 
         # == dataframe info
         r1.markdown(" ### Info")
-        buffer = io.StringIO()
-        dataset_df.info(buf=buffer)  # store it rather than display it in stdout
-        lines = buffer.getvalue().splitlines()
-        df = (
-            pd.DataFrame([x.split() for x in lines[5:-2]], columns=lines[3].split())
-            .drop(["Count", "#"], axis=1)
-            .rename(columns={"Non-Null": "Non-Null Count"})
-        )  # convert to df
-        r1.dataframe(df, hide_index=True, height=315)
+        info_df, mem_str = df_info_table(
+            dataset_df, include_nulls=True, include_unique=False, deep_memory=True
+        )
+        r1.dataframe(info_df, hide_index=True, height=315)
+        r1.caption(f"Memory usage (deep): {mem_str}")
 
     # ==== Feature overview ===
     with st.expander("🔍 Overview"):
