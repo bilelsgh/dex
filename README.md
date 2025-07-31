@@ -12,11 +12,11 @@
 
 This application equips data scientists with essential tools for dataset exploration, cleaning, and preparation. It simplifies the extraction of insights and ensures data is ready for machine learning algorithms, streamlining the entire workflow and enhancing productivity.
 
-#### DeX - Analysis
+### DeX - Analysis
 Explore your data to gather the most relevant insights
 ![alt text](./assets/demo_1.gif "Analysis")
 
-#### DeX - Pre-processing
+### DeX - Pre-processing
 Apply state-of-the-art preprocessing operations to fit your data to Machine Learning algorithms.
 (Normalization, Standardization, Encoding ..)
 ![alt text](./assets/demo_2.gif "Pre-pocessing")
