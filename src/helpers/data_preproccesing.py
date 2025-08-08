@@ -190,7 +190,7 @@ def run_preprocess(
         if operation == "standardization" and len(datasets_idx) > 1:
             logger.info("About to split dataset before standardization.")
             datasets = [
-                dataset.iloc[idxes[i] : idxes[i] + idxes[i + 1]]
+                df_dataset.iloc[idxes[i] : idxes[i] + idxes[i + 1]]
                 for i in range(len(datasets_idx))
             ]
             df_dataset = pd.concat(

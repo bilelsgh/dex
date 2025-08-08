@@ -4,12 +4,12 @@ Class and functions to ease the use and manipulation of datasets
 import sys
 from typing import Union
 
-sys.path.append("../..")
-
 import pandas as pd
 import streamlit as st
 
 from helpers.data_preproccesing import split_datasets
+
+sys.path.append("../..")
 
 
 class DatasetDownloader:

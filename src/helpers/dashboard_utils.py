@@ -5,14 +5,14 @@ Various functions used in the streamlit dashboard.
 import sys
 from typing import Union
 
-sys.path.append("../src")
-
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 from plotly.graph_objs import Figure
 
 from helpers.data_preproccesing import run_preprocess
+
+sys.path.append("../src")
 
 
 @st.cache_data
@@ -129,7 +129,6 @@ def df_info_table(
     include_unique: bool = False,
     deep_memory: bool = True,
 ):
-    n_rows = len(df)
 
     data = {
         "Column": df.columns,

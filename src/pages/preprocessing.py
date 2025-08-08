@@ -191,7 +191,7 @@ if len(dataset_df):
         dataset_downloader = DatasetDownloader(datasets_idx, ready, datasets_name)
 
         c6.download_button(
-            "Download encoded dataset",
+            "Download preprocessed dataset(s)",
             dataset_downloader.download_file,
             file_name=dataset_downloader.file_name,
             mime=dataset_downloader.mime_type,
