@@ -47,7 +47,7 @@ class DatasetDownloader:
     @property
     def file_name(self):
         return (
-            f"processed_{self.datasets_name[0].split('.')[0]}.csv"
+            f"processed_{self.datasets_name.split('.')[0]}.csv"
             if self.is_single
             else "preprocessed_dataset.zip"
         )

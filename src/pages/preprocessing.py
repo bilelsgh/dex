@@ -35,12 +35,13 @@ with st.expander("⬆️ Upload your dataset"):
         datasets_name = (
             [d.name for d in datasets_csv]
             if len(datasets_csv) > 1
-            else datasets_csv[0].name
+            else [datasets_csv[0].name]
         )
         datasets_df = [load_data(dataset_csv) for dataset_csv in datasets_csv]
         datasets_idx = [
             len(d) for d in datasets_df
         ]  # keep the size of every dataset for splitting after processing
+
         dataset_df = pd.concat(datasets_df)
         st.success("Dataset loaded successfully! 🎉")
     except (ValueError, IndexError):
@@ -141,6 +142,31 @@ if len(dataset_df):
 
                 operations[normalization_op.lower()] = {"col": normalization_col}
 
+        # ==== Spit method
+        split_options = ["Same as uploaded", "Train/Test (80/20)"]
+        split_options = (
+            split_options if len(datasets_idx) == 1 else split_options + ["One dataset"]
+        )
+        split = st.segmented_control(
+            "Split method",
+            split_options,
+            selection_mode="single",
+            default="Same as uploaded",
+        )
+
+        if split != "Same as uploaded":
+            datasets_idx = [sum(datasets_idx)]
+            datasets_name = datasets_name[:1]
+            if split == "Train/Test (80/20)":
+                datasets_idx = [
+                    round(datasets_idx[0] * 0.8),
+                    round(datasets_idx[0] * 0.2),
+                ]
+                datasets_name = [
+                    f"train_{datasets_name[0]}",
+                    f"test_{datasets_name[0]}",
+                ]
+
     # == Import config
     else:
         config = st.text_area("Configuration")
@@ -161,7 +187,7 @@ if len(dataset_df):
     if "enc_dataset" in st.session_state:
         ready = st.session_state["enc_dataset"]
 
-        # File to download
+        # == File to download
         dataset_downloader = DatasetDownloader(datasets_idx, ready, datasets_name)
 
         c6.download_button(
