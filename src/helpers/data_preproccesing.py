@@ -149,33 +149,57 @@ def change_label(dataset: pd.DataFrame, mappings: dict) -> pd.DataFrame:
 
 
 def run_preprocess(
-    operations: dict[str, list[str]], dataset: pd.DataFrame
+    operations: dict[str, dict], dataset: pd.DataFrame, datasets_idx: list[int]
 ) -> pd.DataFrame:
     """
-    Run preprocessing operations.
+    Run preprocessing operations on a dataset.
 
-    :param operations: Desired preprocessing operations and args.
+    :param operations: Dict mapping operation names to their parameters.
     :param dataset: Dataset to preprocess.
-    :return:
+    :param datasets_idx: List of dataset split sizes (used for standardization).
+    :return: Preprocessed dataset.
     """
 
+    # Map operation names to their corresponding functions
     valid_operations = {
         "remove_inv_val": remove_invalid_val,
         "standardization": standardize_dataset,
         "encoding": encode_dataset,
         "replace_val": change_label,
     }
+
+    # Work on a copy to avoid modifying the original dataset
     df_dataset = dataset.copy()
+
+    total_ops = len(operations)
     progress = st.progress(0, "Operation in progress..")
 
-    for idx, obj in enumerate(operations.items()):
-        operation, args = obj
-        progress.progress((1 + idx) * 1 / len(operations))
+    # Prepare sizes for standardization step (avoid data leakage)
+    idxes = datasets_idx.copy()
+    idxes.insert(0, 0)  # first split always starts at 0
 
-        # try:
+    for idx, (operation, args) in enumerate(operations.items()):
+        # Update progress bar
+        progress.progress((idx + 1) / total_ops)
+
+        # Check for unknown operations
+        if operation not in valid_operations:
+            raise ValueError(f"Unknown operation: {operation}")
+
+        # Special handling for standardization to avoid leakage between splits
+        if operation == "standardization" and len(datasets_idx) > 1:
+            logger.info("About to split dataset before standardization.")
+            datasets = [
+                dataset.iloc[idxes[i] : idxes[i] + idxes[i + 1]]
+                for i in range(len(datasets_idx))
+            ]
+            df_dataset = pd.concat(
+                [standardize_dataset(d, **args) for d in datasets], ignore_index=True
+            )
+            continue
+
+        # Apply all other preprocessing steps
         df_dataset = valid_operations[operation](df_dataset, **args)
-        # except KeyError as e:
-        #     raise ValueError(f"{e} is not a valid operation")
 
     return df_dataset
 

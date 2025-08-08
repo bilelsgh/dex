@@ -182,7 +182,7 @@ if len(dataset_df):
 
     c5, c6 = st.columns(2)
     if c5.button("Run", type="primary"):
-        preprocessed_dataset = sumup_operations(operations, dataset_df)
+        preprocessed_dataset = sumup_operations(operations, dataset_df, datasets_idx)
 
     if "enc_dataset" in st.session_state:
         ready = st.session_state["enc_dataset"]

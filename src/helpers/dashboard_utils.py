@@ -105,7 +105,9 @@ def dataset_unique_value_chart(dataset: pd.DataFrame) -> Figure:
 
 
 @st.dialog("Are you sure?")
-def sumup_operations(operations: dict, dataset: pd.DataFrame) -> None:
+def sumup_operations(
+    operations: dict, dataset: pd.DataFrame, datasets_idx: list[int]
+) -> None:
     st.markdown("### You are about to run")
 
     txt = "\n".join([f"- {op}" for op, _ in operations.items()])
@@ -115,7 +117,9 @@ def sumup_operations(operations: dict, dataset: pd.DataFrame) -> None:
         st.write(operations)
 
     if st.button("Confirm"):
-        st.session_state["enc_dataset"] = run_preprocess(operations, dataset)
+        st.session_state["enc_dataset"] = run_preprocess(
+            operations, dataset, datasets_idx
+        )
         st.rerun()
 
 
