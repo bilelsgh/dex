@@ -89,21 +89,39 @@ if len(dataset_df):
         with st.expander("Encoding"):
             # == ohe
             if st.toggle("Encode?"):
+                # Initialisation dans session_state
+                if "ohe_col" not in st.session_state:
+                    st.session_state.ohe_col = []
+                if "le_col" not in st.session_state:
+                    st.session_state.le_col = []
+
+                all_columns = dataset_df.columns.tolist()
+
+                # Column to OHE
                 ohe_col = st.multiselect(
                     "Columns to encode with One Hot Encoding",
-                    options=dataset_df.columns,
+                    options=all_columns,
+                    default=st.session_state.ohe_col,
                 )
-                c1, c2 = st.columns(2)
+                st.session_state.ohe_col = ohe_col
 
-                # == l.encoding
-                le_col = [col for col in dataset_df.columns if col not in ohe_col]
-                if not c1.checkbox("Use Label Encoder for the remaining columns"):
+                # Columns that are not OHEncoded
+                remaining_columns = [col for col in all_columns if col not in ohe_col]
+
+                c1, c2 = st.columns(2)
+                use_label = c1.checkbox(
+                    "Use Label Encoder for the remaining columns", value=True
+                )
+
+                if use_label:
+                    le_col = remaining_columns
+                else:
                     le_col = c2.multiselect(
                         "Columns to encode with Label Encoder",
-                        options=[
-                            col for col in dataset_df.columns if col not in ohe_col
-                        ],
+                        options=remaining_columns,
+                        default=st.session_state.le_col,
                     )
+                    st.session_state.le_col = le_col
 
                 operations["encoding"] = {"ohe": ohe_col, "le": le_col}
 

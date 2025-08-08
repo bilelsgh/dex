@@ -72,10 +72,21 @@ if len(dataset_df):
         removed_features = st.multiselect(
             "I remove..", dataset_df.columns, default=[], placeholder="Chose features"
         )
+        type_filter = st.segmented_control(
+            "Type filter", dataset_df.dtypes.unique().tolist(), selection_mode="multi"
+        )
+        df_overview = dataset_df.drop(
+            removed_features, axis=1
+        )  # dataframe to use for this section
+        df_overview = (
+            df_overview.select_dtypes(include=type_filter)
+            if type_filter
+            else df_overview
+        )  # filter on type
         l2, r2 = st.columns(2)
 
         # == column distribution
-        type_counts = dataset_df.drop(removed_features, axis=1).dtypes.value_counts()
+        type_counts = df_overview.dtypes.value_counts()
         type_fig = px.pie(
             names=type_counts.index.astype(str),
             values=type_counts.values,
@@ -85,15 +96,13 @@ if len(dataset_df):
 
         # == variance
         with st.spinner("..Computing variances"):
-            var_fig = dataset_variance_chart(dataset_df.drop(removed_features, axis=1))
+            var_fig = dataset_variance_chart(df_overview)
         if var_fig:
             l2.plotly_chart(var_fig)
 
         # == unique values
         with st.spinner("..Checking unique values"):
-            unq_fig = dataset_unique_value_chart(
-                dataset_df.drop(removed_features, axis=1)
-            )
+            unq_fig = dataset_unique_value_chart(df_overview)
         st.plotly_chart(unq_fig)
 
     # # ==== Columns analysis ====
