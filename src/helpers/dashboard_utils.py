@@ -33,16 +33,17 @@ def column_analysis(col: str, dataset: pd.DataFrame) -> None:
     l1.metric("🔢 Unique values", dataset[col].nunique())
     r1.metric("🚫 Null values", dataset[col].isnull().sum())
     st.markdown("---")
+    cat_viz = st.checkbox("Categorical Visualization")  # force the cat. viz
 
     # Numerical column
-    if pd.api.types.is_numeric_dtype(dataset[col]):
+    if pd.api.types.is_numeric_dtype(dataset[col]) and not cat_viz:
         st.line_chart(dataset[col].tolist())
 
         st.markdown("### 📊 Summary stats")
         st.dataframe(dataset[col].describe().to_frame().T, use_container_width=True)
 
     # Categorical column
-    else:
+    elif not pd.api.types.is_numeric_dtype(dataset[col]) or cat_viz:
         value_counts = dataset[col].value_counts().reset_index()
         value_counts.columns = [col, "count"]
         fig = px.bar(

@@ -43,7 +43,7 @@ if len(dataset_df):
     col1, col2, col3 = st.columns(3)
     col1.metric("📏 Rows", nb_lines)
     col2.metric("📐 Columns", nb_features)
-    col3.metric("💾 Size (MB)", f"{size} Mo")
+    col3.metric("💾 Size", f"{size} Mo")
 
     # ===== Raw data ====
     with st.expander("🥩 Raw data"):

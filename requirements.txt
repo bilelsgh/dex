@@ -1,11 +1,11 @@
 
 # BASIS
-numpy~=1.24.3
-pandas~=2.0.3
-plotly==5.18.0 #
-matplotlib~=3.7.5
-PyYAML==6.0.1 #
-seaborn~=0.13.2
+numpy
+pandas
+plotly
+matplotlib
+PyYAML
+seaborn
 
 # ML
 scikit-learn

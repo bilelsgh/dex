@@ -56,6 +56,8 @@ if len(dataset_df):
         horizontal=True,
     )
     st.markdown("---")
+    if st.checkbox("Shuffle?"):
+        dataset_df = dataset_df.sample(frac=1).reset_index(drop=True)
 
     # == Processing is done through the graphic interface
     if view == "Step by step":
