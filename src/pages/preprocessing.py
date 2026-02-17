@@ -117,14 +117,19 @@ if len(dataset_df):
                 )
 
                 if use_label:
-                    le_col = remaining_columns
+                    not_le_col = c2.multiselect(
+                        "Except columns to encode with Label Encoder",
+                        options=remaining_columns,
+                        default=st.session_state.le_col,
+                    )
+                    le_col = [c for c in remaining_columns if c not in not_le_col]
                 else:
                     le_col = c2.multiselect(
                         "Columns to encode with Label Encoder",
                         options=remaining_columns,
                         default=st.session_state.le_col,
                     )
-                    st.session_state.le_col = le_col
+                st.session_state.le_col = le_col
 
                 operations["encoding"] = {"ohe": ohe_col, "le": le_col}
 
@@ -141,6 +146,11 @@ if len(dataset_df):
                     normalization_col = st.multiselect(
                         "Columns to normalize", options=dataset_df.columns
                     )
+                else:
+                    not_norm = st.multiselect(
+                        "Columns not to normalize", options=dataset_df.columns
+                    )
+                    normalization_col = [col for col in dataset_df.columns if col not in not_norm]
 
                 operations[normalization_op.lower()] = {"col": normalization_col}
 
