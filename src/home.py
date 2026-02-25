@@ -14,7 +14,8 @@ from helpers.dashboard_utils import (
     df_info_table,
     load_data,
     correlation_matrix,
-    plot_correlation
+    plot_correlation,
+    visualize_class_apparition
 )
 
 # == Page config
@@ -108,6 +109,16 @@ if len(dataset_df):
         st.plotly_chart(unq_fig)
 
     # # ==== Columns analysis ====
+    with st.expander("🔥 Class apparition"):
+        option_app = st.selectbox(
+            "Class to visualize",
+            dataset_df.columns,
+        )
+        st.plotly_chart(
+            visualize_class_apparition(dataset_df, option_app)
+        )
+
+    # # ==== Columns analysis ====
     with st.expander("📍 Correlation"):
         st.plotly_chart(
             correlation_matrix(dataset_df)
@@ -126,7 +137,7 @@ if len(dataset_df):
 
     # # ==== Columns analysis ====
     with st.expander("💡 Analysis"):
-        selected_col = st.pills("Columns", dataset_df.columns.tolist())
+        selected_col = st.selectbox("Columns", dataset_df.columns.tolist())
         st.markdown("---")
         low_rows_bound, high_rows_bound = st.slider(
             "Select the rows you want to analyse", value=(0, len(dataset_df) - 1)

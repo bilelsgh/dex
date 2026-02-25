@@ -7,6 +7,7 @@ from typing import Union
 
 import pandas as pd
 import plotly.express as px
+import matplotlib.pyplot as plt
 import streamlit as st
 from plotly.graph_objs import Figure
 from sklearn.preprocessing import LabelEncoder
@@ -205,5 +206,35 @@ def plot_correlation(df: pd.DataFrame, col1: str, col2: str) -> any:
         trendline="ols",
         title=f"Correlation: {col1} vs {col2} — Pearson r = {r:.3f} (p = {p:.3g})"
     )
+
+    return fig
+
+def visualize_class_apparition(
+    train_df: pd.DataFrame, class_label: str
+) -> any:
+    """
+    Visualizes the appearance of classes over time (index).
+
+    :param train_df: DataFrame containing the training data with a class label column.
+    :param class_label: Name of the column containing the class labels.
+    :return: plotly.graph_objs.Figure
+    """
+
+    df = train_df.reset_index()
+
+    fig = px.scatter(
+        df,
+        x="index",
+        y=class_label,
+        color=class_label,
+        title=f"{class_label} apparition through time",
+        labels={"index": "Sample Index", class_label: "Attack Category"},
+        opacity=0.6,
+        height=600,
+        width=900,
+    )
+
+    fig.update_traces(marker=dict(size=6), showlegend=False)
+    fig.update_layout(template="plotly_dark", margin=dict(l=40, r=40, t=80, b=40))
 
     return fig
