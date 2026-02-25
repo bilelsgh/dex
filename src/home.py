@@ -13,6 +13,8 @@ from helpers.dashboard_utils import (
     dataset_variance_chart,
     df_info_table,
     load_data,
+    correlation_matrix,
+    plot_correlation
 )
 
 # == Page config
@@ -104,6 +106,23 @@ if len(dataset_df):
         with st.spinner("..Checking unique values"):
             unq_fig = dataset_unique_value_chart(df_overview)
         st.plotly_chart(unq_fig)
+
+    # # ==== Columns analysis ====
+    with st.expander("📍 Correlation"):
+        st.plotly_chart(
+            correlation_matrix(dataset_df)
+        )
+        st.markdown("---")
+        col_corr = st.multiselect( # check correlation between two columns
+            "Check correlation between columns",
+            dataset_df.columns,
+            default=[],
+            max_selections=2,
+        )
+        if len(col_corr) == 2:
+            st.plotly_chart(
+                plot_correlation(dataset_df, *col_corr)
+            )
 
     # # ==== Columns analysis ====
     with st.expander("💡 Analysis"):

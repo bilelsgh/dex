@@ -30,24 +30,28 @@ def encode_dataset(
     :return: New columns from ohe
     """
 
-    enc = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
-    logger.debug("Encode")
+    new_columns = {}
+    train_enc = train.drop(columns=ohe).reset_index(drop=True)
 
-    # encode cat columns
-    train_cat_enc = enc.fit_transform(train[ohe])
+    if ohe :
+        enc = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
+        logger.debug("Encode")
 
-    encoded_columns = enc.get_feature_names_out(ohe)  # new columns name
-    train_enc = pd.concat(
-        [
-            train.drop(columns=ohe).reset_index(drop=True),
-            pd.DataFrame(train_cat_enc, columns=encoded_columns),
-        ],
-        axis=1,
-    )
-    new_columns = {
-        feat: [f"{feat}_{cat}" for cat in cats]
-        for feat, cats in zip(enc.feature_names_in_, enc.categories_)
-    }
+        # encode cat columns
+        train_cat_enc = enc.fit_transform(train[ohe])
+
+        encoded_columns = enc.get_feature_names_out(ohe)  # new columns name
+        train_enc = pd.concat(
+            [
+                train_enc,
+                pd.DataFrame(train_cat_enc, columns=encoded_columns),
+            ],
+            axis=1,
+        )
+        new_columns = {
+            feat: [f"{feat}_{cat}" for cat in cats]
+            for feat, cats in zip(enc.feature_names_in_, enc.categories_)
+        }
 
     # encode label
     for c in le:

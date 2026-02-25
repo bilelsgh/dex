@@ -27,8 +27,10 @@ with st.expander("⬆️ Upload your dataset"):
     )  # multiple files for train, test, val
 
     # Reset session state
-    # if "enc_dataset" in st.session_state:
-    #     del st.session_state["enc_dataset"]
+    # for key in ["enc_dataset", "le_col", "ohe_col"]:
+    #     print(f"{key} is deprecated")
+    #     if key in st.session_state:
+    #         del st.session_state[key]
 
     # == Load dataset(s)
     try:

@@ -6,6 +6,8 @@ plotly
 matplotlib
 PyYAML
 seaborn
+scipy
+statsmodels
 
 # ML
 scikit-learn

@@ -3,3 +3,6 @@ base = "dark"
 secondaryBackgroundColor = "#132229"
 primaryColor = "#1b465c"
 codeFont = "monospace"
+
+[server]
+maxUploadSize = 400
