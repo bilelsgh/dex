@@ -4,33 +4,26 @@ Various functions used in the streamlit dashboard.
 
 import sys
 from typing import Union
+sys.path.append("../src")
 
 import pandas as pd
 import plotly.express as px
-import matplotlib.pyplot as plt
 import streamlit as st
 from plotly.graph_objs import Figure
 from sklearn.preprocessing import LabelEncoder
-import seaborn as sns
 from scipy import stats
 
 from helpers.data_preproccesing import run_preprocess
 
-sys.path.append("../src")
-
-
-@st.cache_data
-def load_data(path: str) -> pd.DataFrame:
-    """
-    Load a csv file
-
-    :param path: path to csv file
-    :return: dataframe
-    """
-    return pd.read_csv(path)
 
 
 def column_analysis(col: str, dataset: pd.DataFrame) -> None:
+    """
+    Displays a chart to analyse a column.
+
+    :param col: Column to analyze
+    :param dataset: Dataset
+    """
     st.markdown(f"## 📌 Analysis of {col}")
 
     l1, r1 = st.columns(2)
@@ -109,31 +102,20 @@ def dataset_unique_value_chart(dataset: pd.DataFrame) -> Figure:
     )
 
 
-@st.dialog("Are you sure?")
-def sumup_operations(
-    operations: dict, dataset: pd.DataFrame, datasets_idx: list[int]
-) -> None:
-    st.markdown("### You are about to run")
-
-    txt = "\n".join([f"- {op}" for op, _ in operations.items()])
-    st.markdown(txt)
-
-    with st.expander("export"):
-        st.write(operations)
-
-    if st.button("Confirm"):
-        st.session_state["enc_dataset"] = run_preprocess(
-            operations, dataset, datasets_idx
-        )
-        st.rerun()
-
-
 def df_info_table(
     df: pd.DataFrame,
     include_nulls: bool = True,
     include_unique: bool = False,
     deep_memory: bool = True,
 ):
+    """
+    Create a DataFrame similar to the one produced by df.info().
+
+    :param df: Input DataFrame
+    :param include_nulls: Whether to include a column for null counts (default: True)
+    :param include_unique: Whether to include a column for unique value counts (default: False)
+    :param deep_memory: Whether to calculate deep memory usage (default: True)
+    """
 
     data = {
         "Column": df.columns,

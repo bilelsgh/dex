@@ -10,8 +10,9 @@ from typing import Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 import streamlit as st
+from sklearn.decomposition import PCA
 from loguru import logger
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler, MinMaxScaler
 
 
 def encode_dataset(
@@ -83,6 +84,28 @@ def standardize_dataset(dataset: pd.DataFrame, col: list[str] = None) -> pd.Data
 
     return df
 
+
+def normalize_dataset(dataset: pd.DataFrame, col: list[str] = None) -> pd.DataFrame:
+    """
+    Normalize numerical values using Min-Max scaling to a range [0, 1].
+    :param dataset: Dataset to normalize.
+    :param col: Columns to normalize.
+    :return: Normalized dataset.
+    """
+    logger.debug("Normalize (Min-Max)")
+    # init
+    df = dataset.copy()
+    scaler = MinMaxScaler()
+
+    # identify numerical columns if not provided
+    num_col = (
+        col if col else df.select_dtypes(include=["number"]).columns.tolist()
+    )
+
+    # apply scaling
+    df[num_col] = scaler.fit_transform(df[num_col])
+
+    return df
 
 def remove_invalid_val(dataset: pd.DataFrame, k: int = 10) -> pd.DataFrame:
     """
@@ -173,8 +196,10 @@ def run_preprocess(
     valid_operations = {
         "remove_inv_val": remove_invalid_val,
         "standardization": standardize_dataset,
+        "minmax": normalize_dataset,
         "encoding": encode_dataset,
         "replace_val": change_label,
+        "pca": pca,
     }
 
     # Work on a copy to avoid modifying the original dataset
@@ -220,17 +245,18 @@ def run_preprocess(
                 [valid_operations[operation](d, **args) for d in datasets],
                 ignore_index=True,
             )
-            continue
+            # continue
 
         # Special handling for encoding to retrieve new columns (oh-encoded ones)
         elif operation == "encoding":
             df_dataset, encoded_columns = valid_operations[operation](
                 df_dataset, **args
             )
-            continue
+            # continue
 
-        # Apply all other preprocessing steps
-        df_dataset = valid_operations[operation](df_dataset, **args)
+        else:
+            # Apply all other preprocessing steps
+            df_dataset = valid_operations[operation](df_dataset, **args)
 
     return df_dataset
 
@@ -269,3 +295,47 @@ def split_datasets(
             csv_zip.writestr(f"preprocessed_{n}", pd.DataFrame(d).to_csv(index=False))
 
     return buf
+
+def pca(
+    train_df: pd.DataFrame,
+    cols_to_drop: list[str],
+    nb_dim_: int = None,
+    min_variance: float = 0.8,
+) -> pd.DataFrame:
+    """
+    Reducing dimension using PCA.
+
+    :param train_df: Train dataframe.
+    :param cols_to_drop: Columns to drop before applying PCA (label columns, attack_cat, etc.)
+    :param nb_dim_: Number of dimensions to keep. If None, determined by min_variance.
+    :param min_variance: Minimum cumulated variance to reach when selecting nb_dim.
+
+    :return reduced_train_df: Train dataframe with reduced dimensions
+    :return fitted_pca: Fitted PCA object
+    """
+
+    train_features = train_df.drop(columns=cols_to_drop)
+    train_dropped = train_df[cols_to_drop]
+
+
+    # Determine number of dimensions to keep
+    if nb_dim_ is not None:
+        nb_dim = nb_dim_
+    else:
+        full_pca = PCA().fit(train_features)
+        cumulative_variances = np.cumsum(full_pca.explained_variance_ratio_)
+        nb_dim = next(
+            (i + 1 for i, v in enumerate(cumulative_variances) if v >= min_variance),
+            train_features.shape[1],  # fallback: keep all dimensions
+        )
+
+    # Fit PCA with the selected number of dimensions on train, apply to both sets
+    fitted_pca = PCA(n_components=nb_dim)
+    fitted_pca.fit(train_features)
+
+    reduced_train_df = pd.DataFrame(fitted_pca.transform(train_features))
+
+    # Add back label columns
+    reduced_train_df[cols_to_drop] = train_dropped
+
+    return reduced_train_df

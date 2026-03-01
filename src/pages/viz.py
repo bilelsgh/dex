@@ -1,22 +1,22 @@
-import io
 import sys
 
-sys.path.append("../src")
+sys.path.append("..")
 
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from helpers.dashboard_utils import (
+from helpers.viz_utils import (
     column_analysis,
     dataset_unique_value_chart,
     dataset_variance_chart,
     df_info_table,
-    load_data,
     correlation_matrix,
     plot_correlation,
     visualize_class_apparition
 )
+
+from helpers.utils import load_data
 
 # == Page config
 st.set_page_config(page_title="Home", page_icon="")
