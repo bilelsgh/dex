@@ -22,25 +22,30 @@ class DatasetDownloader:
         datasets_idx: list[int],
         processed_dataset: pd.DataFrame,
         datasets_names: Union[list[str], str],
+        export_csv: bool = False,
     ):
         """
-
         :param datasets_idx: Size of the datasets
         :param processed_dataset: The processed dataset
         :param datasets_names: Name of every dataset
+        :param export_csv: Whether to export a single csv file or a zip file containing all datasets
         """
         self.datasets_idx = datasets_idx
         self.processed_dataset = processed_dataset
         self.datasets_name = datasets_names
+        self.export_csv = export_csv
         self.is_single = len(datasets_idx) <= 1
 
     @property
     def download_file(self):
         return (
-            st.session_state["enc_dataset"].to_csv(index=False)
+            self.processed_dataset.to_csv(index=False)
             if self.is_single
             else split_datasets(
-                self.processed_dataset, self.datasets_idx, self.datasets_name
+                self.processed_dataset,
+                self.datasets_idx,
+                self.datasets_name,
+                export_csv=self.export_csv,
             )
         )
 

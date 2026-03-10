@@ -12,12 +12,9 @@ sys.path.append("../..")
 
 import pandas as pd
 import streamlit as st
-from st_aggrid import AgGrid, GridOptionsBuilder
-from streamlit_extras.metric_cards import style_metric_cards
 
-from helpers.utils import load_data, sumup_operations
 from helpers.dataset_tools import DatasetDownloader
-
+from helpers.utils import SplitMethod, get_split_idx, load_data, sumup_operations
 
 # ─── Page config ──────────────────────────────────────────────────────────────
 
@@ -81,11 +78,17 @@ with st.expander("⬆️ Upload your dataset", expanded=True):
     )
 
     try:
-        datasets_name = [d.name for d in datasets_csv] if len(datasets_csv) > 1 else [datasets_csv[0].name]
+        datasets_name = (
+            [d.name for d in datasets_csv]
+            if len(datasets_csv) > 1
+            else [datasets_csv[0].name]
+        )
         datasets_df_list = [load_data(f) for f in datasets_csv]
         datasets_idx = [len(d) for d in datasets_df_list]
         dataset_df = pd.concat(datasets_df_list, ignore_index=True)
-        st.success(f"✅ {len(datasets_csv)} file(s) loaded — {len(dataset_df):,} rows × {len(dataset_df.columns)} columns")
+        st.success(
+            f"✅ {len(datasets_csv)} file(s) loaded — {len(dataset_df):,} rows × {len(dataset_df.columns)} columns"
+        )
     except (ValueError, IndexError):
         st.info("Upload at least one CSV file to get started.")
 
@@ -139,7 +142,9 @@ if view == "Step by step":
         )
         if col_to_drop:
             dataset_df = dataset_df.drop(columns=col_to_drop)
-            st.info(f"Preview updated — {len(col_to_drop)} column(s) removed. {len(dataset_df.columns)} remaining.")
+            st.info(
+                f"Preview updated — {len(col_to_drop)} column(s) removed. {len(dataset_df.columns)} remaining."
+            )
 
         # Live mini-preview
         st.dataframe(dataset_df.head(5), use_container_width=True)
@@ -204,15 +209,27 @@ if view == "Step by step":
                 c2.multiselect(
                     "Exclude from Label Encoding",
                     options=remaining_columns,
-                    default=[c for c in st.session_state.le_col_excluded if c in remaining_columns],
+                    default=[
+                        c
+                        for c in st.session_state.le_col_excluded
+                        if c in remaining_columns
+                    ],
                     key="le_col_excluded",  # Streamlit keeps this in sync automatically
                 )
-                le_col = [c for c in remaining_columns if c not in st.session_state.le_col_excluded]
+                le_col = [
+                    c
+                    for c in remaining_columns
+                    if c not in st.session_state.le_col_excluded
+                ]
             else:
                 c2.multiselect(
                     "Columns → Label Encoding",
                     options=remaining_columns,
-                    default=[c for c in st.session_state.le_col_included if c in remaining_columns],
+                    default=[
+                        c
+                        for c in st.session_state.le_col_included
+                        if c in remaining_columns
+                    ],
                     key="le_col_included",
                 )
                 le_col = st.session_state.le_col_included
@@ -237,15 +254,23 @@ if view == "Step by step":
             c3, c4 = st.columns(2)
 
             if c3.checkbox("Apply to all numeric columns"):
-                excluded_norm = c4.multiselect("Exclude columns", options=dataset_df.columns)
-                norm_cols = [col for col in dataset_df.columns if col not in excluded_norm]
+                excluded_norm = c4.multiselect(
+                    "Exclude columns", options=dataset_df.columns
+                )
+                norm_cols = [
+                    col for col in dataset_df.columns if col not in excluded_norm
+                ]
             else:
-                norm_cols = c4.multiselect("Columns to normalize", options=dataset_df.columns)
+                norm_cols = c4.multiselect(
+                    "Columns to normalize", options=dataset_df.columns
+                )
 
             operations[norm_method.lower()] = {"col": norm_cols}
 
             if norm_cols:
-                st.caption(f"{norm_method} will be applied to {len(norm_cols)} column(s).")
+                st.caption(
+                    f"{norm_method} will be applied to {len(norm_cols)} column(s)."
+                )
 
     # ── Tab 5 — Dimension reduction ───────────────────────────────────────────
 
@@ -264,7 +289,7 @@ if view == "Step by step":
             col_to_drop_pca = pca_col2.multiselect(
                 "Columns to exclude from PCA",
                 options=dataset_df.columns.tolist(),
-                help="PCA will be applied to the remaining numeric columns after encoding and normalization steps."
+                help="PCA will be applied to the remaining numeric columns after encoding and normalization steps.",
             )
             st.divider()
 
@@ -277,8 +302,13 @@ if view == "Step by step":
                     step=0.01,
                     format="%.2f",
                 )
-                operations["pca"] = {"min_variance": min_var, "cols_to_drop": col_to_drop_pca}
-                st.caption(f"PCA will keep enough components to explain ≥ {min_var:.0%} of variance.")
+                operations["pca"] = {
+                    "min_variance": min_var,
+                    "cols_to_drop": col_to_drop_pca,
+                }
+                st.caption(
+                    f"PCA will keep enough components to explain ≥ {min_var:.0%} of variance."
+                )
             else:
                 nb_dim = st.number_input(
                     "Number of components to keep",
@@ -302,7 +332,9 @@ else:
     if config_txt:
         try:
             operations = json.loads(config_txt)
-            st.success(f"✔ Config loaded — {len(operations)} operation(s) detected: `{'`, `'.join(operations.keys())}`")
+            st.success(
+                f"✔ Config loaded — {len(operations)} operation(s) detected: `{'`, `'.join(operations.keys())}`"
+            )
         except json.JSONDecodeError:
             st.warning("⚠️ Invalid JSON — please check your config.")
 
@@ -311,16 +343,9 @@ else:
 
 # Resolve sidebar split choice into datasets_idx / datasets_name
 try:
-    if split_method == "One merged dataset" or split_method == "Same as uploaded":
-        if split_method == "One merged dataset":
-            datasets_idx = [sum(datasets_idx)]
-            datasets_name = datasets_name[:1]
-        # else: keep as-is
-
-    elif split_method == "Train / Test (80 / 20)":
-        total = sum(datasets_idx)
-        datasets_idx = [round(total * 0.8), round(total * 0.2)]
-        datasets_name = [f"train_{datasets_name[0]}", f"test_{datasets_name[0]}"]
+    datasets_idx, datasets_name = get_split_idx(
+        SplitMethod(split_method), datasets_name, datasets_df_list, datasets_idx
+    )
 except NameError:
     pass  # datasets_idx not yet defined (no file uploaded), handled by st.stop() above
 
@@ -339,7 +364,9 @@ if c_run.button("▶  Run preprocessing", type="primary", use_container_width=Tr
                 st.write(f"• Applying **{op_name}**…")
 
             preprocessed = sumup_operations(operations, dataset_df, datasets_idx)
-            status.update(label="✅ Preprocessing complete!", state="complete", expanded=False)
+            status.update(
+                label="✅ Preprocessing complete!", state="complete", expanded=False
+            )
 
 
 # ─── Download button ──────────────────────────────────────────────────────────

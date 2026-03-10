@@ -10,9 +10,14 @@ from typing import Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 import streamlit as st
-from sklearn.decomposition import PCA
 from loguru import logger
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler, MinMaxScaler
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import (
+    LabelEncoder,
+    MinMaxScaler,
+    OneHotEncoder,
+    StandardScaler,
+)
 
 
 def encode_dataset(
@@ -32,9 +37,10 @@ def encode_dataset(
     """
 
     new_columns = {}
+    logger.warning(train.columns)
     train_enc = train.drop(columns=ohe).reset_index(drop=True)
 
-    if ohe :
+    if ohe:
         enc = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
         logger.debug("Encode")
 
@@ -98,14 +104,13 @@ def normalize_dataset(dataset: pd.DataFrame, col: list[str] = None) -> pd.DataFr
     scaler = MinMaxScaler()
 
     # identify numerical columns if not provided
-    num_col = (
-        col if col else df.select_dtypes(include=["number"]).columns.tolist()
-    )
+    num_col = col if col else df.select_dtypes(include=["number"]).columns.tolist()
 
     # apply scaling
     df[num_col] = scaler.fit_transform(df[num_col])
 
     return df
+
 
 def remove_invalid_val(dataset: pd.DataFrame, k: int = 10) -> pd.DataFrame:
     """
@@ -266,6 +271,7 @@ def split_datasets(
     indexes: list[int],
     names: list[str],
     for_download: bool = True,
+    export_csv: bool = False,
 ) -> Union[BytesIO, Tuple[pd.DataFrame, ...]]:
     """
     Split dataset in len(indexes) subdatasets according to the given indexes.
@@ -274,6 +280,7 @@ def split_datasets(
     :param indexes: Size of the subdatasets.
     :param names: Names of the subdatasets.
     :param for_download: If True, return a zip object for download, else return a tuple containing the datasets.
+    :param export_csv: If True, export the datasets as csv files in the zip file (only if for_download is True).
     :return: Split dataset.
     """
 
@@ -283,6 +290,10 @@ def split_datasets(
         dataset.iloc[indexes_[i] : indexes_[i] + indexes_[i + 1]]
         for i in range(len(indexes))
     ]
+
+    if export_csv:
+        for n, d in zip(names, datasets):
+            d.to_csv(f"preprocessed_{n}", index=False)
 
     if not for_download:
         return tuple(datasets)
@@ -295,6 +306,7 @@ def split_datasets(
             csv_zip.writestr(f"preprocessed_{n}", pd.DataFrame(d).to_csv(index=False))
 
     return buf
+
 
 def pca(
     train_df: pd.DataFrame,
@@ -316,7 +328,6 @@ def pca(
 
     train_features = train_df.drop(columns=cols_to_drop)
     train_dropped = train_df[cols_to_drop]
-
 
     # Determine number of dimensions to keep
     if nb_dim_ is not None:
