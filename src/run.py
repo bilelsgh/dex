@@ -118,9 +118,11 @@ if __name__ == "__main__":
         [args.train, args.test] if df_test is not None else [args.train],
         dfs,
     )
+    logger.warning(datasets_name)
     preprocessed = run_preprocess(
         operations, pd.concat(dfs, ignore_index=True), datasets_idx
     )
 
+    logger.debug("Dataset preprocessed! About to prepare the download.")
     res = DatasetDownloader(datasets_idx, preprocessed, datasets_name, True)
     buf = res.download_file

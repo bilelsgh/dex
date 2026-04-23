@@ -3,14 +3,17 @@ Contains classic data preprocessing function
 """
 
 import io
+import os
 import zipfile
 from io import BytesIO
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+import seaborn as sns
 import streamlit as st
 from loguru import logger
+from matplotlib import pyplot as plt
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import (
     LabelEncoder,
@@ -45,8 +48,15 @@ def encode_dataset(
         logger.debug("Encode")
 
         # encode cat columns
-        train_cat_enc = enc.fit_transform(train[ohe])
+        try:
+            train_cat_enc = enc.fit_transform(train[ohe])
+        except:
+            logger.error(
+                "Error during encoding. Check that the columns to encode are of type 'object' and contain categorical values."
+            )
+            raise
 
+        logger.info("ok")
         encoded_columns = enc.get_feature_names_out(ohe)  # new columns name
         train_enc = pd.concat(
             [
@@ -292,8 +302,17 @@ def split_datasets(
     ]
 
     if export_csv:
+        logger.debug("Exporting datasets as csv files.")
+        if not os.path.isdir("preprocessed_datasets"):
+            os.mkdir("preprocessed_datasets")
+
         for n, d in zip(names, datasets):
-            d.to_csv(f"preprocessed_{n}", index=False)
+            d.to_csv(
+                f"preprocessed_datasets/preprocessed_{os.path.basename(n)}", index=False
+            )
+            logger.info(
+                f"Wrote {n} to preprocessed_datasets/preprocessed_{os.path.basename(n)}"
+            )
 
     if not for_download:
         return tuple(datasets)
@@ -348,5 +367,27 @@ def pca(
 
     # Add back label columns
     reduced_train_df[cols_to_drop] = train_dropped
+
+    # viz pca
+    pca_component_directions = pd.DataFrame(
+        fitted_pca.components_,
+        columns=train_features.columns,
+        index=np.arange(1, fitted_pca.n_components_ + 1),
+    )
+
+    # Make a heatmap to show the contribution of each feature to each principal component
+    fig = plt.figure(figsize=(12, 9))
+    sns.heatmap(
+        pca_component_directions.T,
+        linewidth=0.2,
+        annot=False,
+        cmap="coolwarm",
+        vmax=1,
+        vmin=-1,
+    )
+    plt.ylabel("Features", fontsize=11)
+    plt.xlabel("Components", fontsize=11)
+    plt.tight_layout()
+    plt.savefig("exp/pca_component_directions.png", dpi=300)
 
     return reduced_train_df
