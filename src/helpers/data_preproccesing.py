@@ -152,9 +152,14 @@ def remove_invalid_val(dataset: pd.DataFrame, k: int = 10) -> pd.DataFrame:
                 ~df[col].isin([np.inf, -np.inf, np.nan]), col
             ].mean()
 
+            # Fallback if the column only contains NaNs or infs
+            if pd.isna(replaced_nan_val):
+                replaced_nan_val = 0
+
         else:
             # For obj columns, Nan are replaced by the mode
-            replaced_nan_val = df[col].mode()[0]
+            mode_series = df[col].mode()
+            replaced_nan_val = mode_series[0] if not mode_series.empty else "Unknown"
 
         df.loc[df[col].isna(), col] = replaced_nan_val
 
@@ -206,6 +211,15 @@ def run_preprocess(
     :param datasets_idx: List of dataset split sizes (used for standardization).
     :return: Preprocessed dataset.
     """
+
+    if not operations:
+        numeric_cols = dataset.select_dtypes(include=["number"]).columns.tolist()
+        categorical_cols = dataset.select_dtypes(exclude=["number"]).columns.tolist()
+        operations = {
+            "remove_inv_val": {},
+            "encoding": {"le": categorical_cols},
+            "standardization": {"col": numeric_cols},
+        }
 
     # Map operation names to their corresponding functions
     valid_operations = {
@@ -308,7 +322,8 @@ def split_datasets(
 
         for n, d in zip(names, datasets):
             d.to_csv(
-                f"preprocessed_datasets/preprocessed_{os.path.basename(n)}", index=False
+                f"./preprocessed_datasets/preprocessed_{os.path.basename(n)}",
+                index=False,
             )
             logger.info(
                 f"Wrote {n} to preprocessed_datasets/preprocessed_{os.path.basename(n)}"

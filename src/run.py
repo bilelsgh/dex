@@ -123,6 +123,8 @@ if __name__ == "__main__":
         operations, pd.concat(dfs, ignore_index=True), datasets_idx
     )
 
-    logger.debug("Dataset preprocessed! About to prepare the download.")
+    logger.debug(
+        f"Dataset preprocessed! About to prepare the download. Dataset indexes: {datasets_idx}"
+    )
     res = DatasetDownloader(datasets_idx, preprocessed, datasets_name, True)
-    buf = res.download_file
+    buf = res.download_file()

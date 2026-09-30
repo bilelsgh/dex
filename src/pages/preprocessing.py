@@ -377,7 +377,7 @@ if "enc_dataset" in st.session_state:
 
     c_dl.download_button(
         label="⬇️  Download preprocessed dataset(s)",
-        data=dataset_downloader.download_file,
+        data=dataset_downloader.download_file(),
         file_name=dataset_downloader.file_name,
         mime=dataset_downloader.mime_type,
         use_container_width=True,

@@ -63,15 +63,18 @@ def get_split_idx(
 
     datasets_idx = [len(d) for d in datasets] if dataset_idx is None else dataset_idx
 
-    if split_method in ["One merged dataset", "Same as uploaded"]:
-        if split_method == "One merged dataset":
+    if split_method in [SplitMethod.MERGED, SplitMethod.SAME]:
+        if split_method == SplitMethod.MERGED:
             datasets_idx = [sum(datasets_idx)]
             datasets_name = datasets_name[:1]
         # else: keep as-is
 
-    elif split_method == "Train / Test (80 / 20)":
+    elif split_method == SplitMethod.TRAIN_TEST:
         total = sum(datasets_idx)
         datasets_idx = [round(total * 0.8), round(total * 0.2)]
-        datasets_name = [f"train_{datasets_name[0]}", f"test_{datasets_name[0]}"]
+        datasets_name = [
+            f"{datasets_name[0].split('.csv')[0]}_train.csv",
+            f"{datasets_name[0].split('.csv')[0]}_test.csv",
+        ]
 
     return datasets_idx, datasets_name

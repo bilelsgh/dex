@@ -1,11 +1,13 @@
 """
 Class and functions to ease the use and manipulation of datasets
 """
+import os
 import sys
 from typing import Union
 
 import pandas as pd
 import streamlit as st
+from loguru import logger
 
 from helpers.data_preproccesing import split_datasets
 
@@ -36,10 +38,16 @@ class DatasetDownloader:
         self.export_csv = export_csv
         self.is_single = len(datasets_idx) <= 1
 
-    @property
-    def download_file(self):
+    def download_file(self, path: str = None):
+        if path is None:
+            path = (
+                f"preprocessed_{os.path.basename(self.datasets_name[0])}"
+                if self.is_single
+                else "dataset.csv"
+            )
+
         return (
-            self.processed_dataset.to_csv(index=False)
+            self.processed_dataset.to_csv(path, index=False)
             if self.is_single
             else split_datasets(
                 self.processed_dataset,
@@ -52,7 +60,7 @@ class DatasetDownloader:
     @property
     def file_name(self):
         return (
-            f"processed_{self.datasets_name[0].split('.')[0]}.csv"
+            f"preprocessed_{os.path.basename(self.datasets_name[0])}"
             if self.is_single
             else "preprocessed_dataset.zip"
         )
