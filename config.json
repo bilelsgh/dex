@@ -5,11 +5,12 @@
    "encoding":{
       "ohe":[
          "flag",
-         "protocol_type"
-      ],
+         "application_category_name"
+],
       "le":[
          "service",
-         "label"
+         "label",
+         "application_name",
       ]
    },
    "standardization":{
@@ -46,3 +47,7 @@
       ]
    }
 }
+'application_name', 'application_category_name',
+       'application_is_guessed', 'application_confidence',
+       'requested_server_name', 'client_fingerprint', 'server_fingerprint',
+       'user_agent', 'content_type'

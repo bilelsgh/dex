@@ -151,11 +151,10 @@ def remove_invalid_val(dataset: pd.DataFrame, k: int = 10) -> pd.DataFrame:
             replaced_nan_val = df.loc[
                 ~df[col].isin([np.inf, -np.inf, np.nan]), col
             ].mean()
-
+           
             # Fallback if the column only contains NaNs or infs
             if pd.isna(replaced_nan_val):
                 replaced_nan_val = 0
-
         else:
             # For obj columns, Nan are replaced by the mode
             mode_series = df[col].mode()
@@ -219,7 +218,7 @@ def run_preprocess(
             "remove_inv_val": {},
             "encoding": {"le": categorical_cols},
             "standardization": {"col": numeric_cols},
-        }
+    }
 
     # Map operation names to their corresponding functions
     valid_operations = {

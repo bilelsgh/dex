@@ -6,6 +6,7 @@ from enum import Enum
 
 import pandas as pd
 import streamlit as st
+from loguru import logger
 
 from helpers.data_preproccesing import run_preprocess
 
@@ -63,18 +64,17 @@ def get_split_idx(
 
     datasets_idx = [len(d) for d in datasets] if dataset_idx is None else dataset_idx
 
+    logger.debug(f"split method: {split_method}")
     if split_method in [SplitMethod.MERGED, SplitMethod.SAME]:
-        if split_method == SplitMethod.MERGED:
+        if split_method == "One merged dataset":
             datasets_idx = [sum(datasets_idx)]
             datasets_name = datasets_name[:1]
         # else: keep as-is
 
     elif split_method == SplitMethod.TRAIN_TEST:
+        logger.debug("about to train test split")
         total = sum(datasets_idx)
         datasets_idx = [round(total * 0.8), round(total * 0.2)]
-        datasets_name = [
-            f"{datasets_name[0].split('.csv')[0]}_train.csv",
-            f"{datasets_name[0].split('.csv')[0]}_test.csv",
-        ]
+        datasets_name = [f"{datasets_name[0].split('.csv')[0]}_train.csv", f"{datasets_name[0].split('.csv')[0]}_test.csv"]
 
     return datasets_idx, datasets_name
