@@ -95,6 +95,12 @@ def standardize_dataset(dataset: pd.DataFrame, col: list[str] = None) -> pd.Data
         col if col else df.select_dtypes(include=["number"]).columns.tolist()
     )  # keep numerical columns
 
+    # captured datasets do not always hold every configured column (e.g. depends on the plugins used)
+    missing = [c for c in num_col if c not in df.columns]
+    if missing:
+        logger.warning(f"Columns not found, skipped for standardization: {missing}")
+        num_col = [c for c in num_col if c in df.columns]
+
     # std
     df[num_col] = std.fit_transform(df[num_col])
 
@@ -151,7 +157,7 @@ def remove_invalid_val(dataset: pd.DataFrame, k: int = 10) -> pd.DataFrame:
             replaced_nan_val = df.loc[
                 ~df[col].isin([np.inf, -np.inf, np.nan]), col
             ].mean()
-           
+
             # Fallback if the column only contains NaNs or infs
             if pd.isna(replaced_nan_val):
                 replaced_nan_val = 0
@@ -218,7 +224,7 @@ def run_preprocess(
             "remove_inv_val": {},
             "encoding": {"le": categorical_cols},
             "standardization": {"col": numeric_cols},
-    }
+        }
 
     # Map operation names to their corresponding functions
     valid_operations = {
