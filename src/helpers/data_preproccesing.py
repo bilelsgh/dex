@@ -205,6 +205,33 @@ def change_label(dataset: pd.DataFrame, mappings: dict) -> pd.DataFrame:
     return df
 
 
+def log_column_stats(dataset: pd.DataFrame) -> None:
+    """
+    Log mean and variance for each column in the dataset.
+
+    :param dataset: Dataset whose column statistics should be logged.
+    """
+    numeric_df = dataset.select_dtypes(include=["number"])
+    if numeric_df.empty:
+        logger.warning("No numeric columns found to calculate mean and variance.")
+        return
+
+    means = numeric_df.mean()
+    variances = numeric_df.var()
+
+    logger.info("=== Preprocessing finished: Column statistics (Mean & Variance) ===")
+    for col in numeric_df.columns:
+        logger.info(
+            f"Column '{col}' | Mean: {means[col]:.6g} | Variance: {variances[col]:.6g}"
+        )
+
+    non_numeric_cols = dataset.select_dtypes(exclude=["number"]).columns.tolist()
+    if non_numeric_cols:
+        logger.debug(
+            f"Non-numeric columns (skipped for mean & variance): {non_numeric_cols}"
+        )
+
+
 def run_preprocess(
     operations: dict[str, dict], dataset: pd.DataFrame, datasets_idx: list[int]
 ) -> pd.DataFrame:
@@ -291,6 +318,8 @@ def run_preprocess(
         else:
             # Apply all other preprocessing steps
             df_dataset = valid_operations[operation](df_dataset, **args)
+
+    log_column_stats(df_dataset)
 
     return df_dataset
 
