@@ -4,4 +4,5 @@ test.*
 __pycache__
 .python-version
 exp/
-preprocessed_datasets/preprocessed_hno_toniot.csv
+preprocessed_datasets/*
+preprocessed_datasets/
