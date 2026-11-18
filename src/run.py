@@ -4,6 +4,7 @@ Call the different DeX components without running the dashboard
 import argparse
 import json
 import sys
+import time
 
 import pandas as pd
 from loguru import logger
@@ -119,8 +120,18 @@ if __name__ == "__main__":
         dfs,
     )
     logger.warning(datasets_name)
+
+    # Chronométrage du preprocessing, avec les opérations (config) utilisées.
+    preprocess_start = time.perf_counter()
+
     preprocessed = run_preprocess(
         operations, pd.concat(dfs, ignore_index=True), datasets_idx
+    )
+
+    preprocess_duration = time.perf_counter() - preprocess_start
+    logger.info(
+        f"Preprocessing (operations={list(operations.keys())}) took "
+        f"{preprocess_duration:.2f}s."
     )
 
     logger.debug(
